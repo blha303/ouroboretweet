@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tweepy
 import json
+import sys
 
 with open(".twitter_config.json") as f:
     config = json.load(f)
@@ -13,9 +14,15 @@ try:
     with open("lasttweet") as f:
         lasttweet = f.read().strip()
 except OSError:
-    lasttweet = None
-for tweet in api.list_timeline("ouroboretweet", "ouroboretweet", since_id=lasttweet):
-    _ = api.retweet(tweet.id)
+    lasttweet = api.user_timeline("ouroboretweet", count=1)[0].retweeted_status.id
+
+timeline = api.list_timeline("ouroboretweet", "ouroboretweet", since_id=lasttweet)
+if not timeline:
+    print("Nothing to do")
+    sys.exit(0)
+for tweet in timeline:
+    if not tweet.retweeted:
+        _ = api.retweet(tweet.id)
     lasttweet = tweet.id
 with open("lasttweet", "w") as f:
-    f.write(lasttweet)
+    f.write(str(lasttweet))
